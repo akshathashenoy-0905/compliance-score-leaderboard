@@ -18,6 +18,8 @@ public class ComplianceScore {
 
     private String status;
 
+    private boolean deleted = false;   // ✅ HERE (field area, not inside method)
+
     // getters and setters
 
     public Long getId() {
@@ -58,5 +60,13 @@ public class ComplianceScore {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 }

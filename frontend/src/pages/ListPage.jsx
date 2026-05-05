@@ -4,10 +4,30 @@ import API from "../services/api";
 export default function ListPage() {
   const [data, setData] = useState([]);
 
-  useEffect(() => {
+  const fetchData = () => {
     API.get("/api/compliance/all")
       .then(res => setData(res.data))
       .catch(err => console.log(err));
+  };
+
+  const handleDelete = (id) => {
+    API.delete(`/api/compliance/${id}`)
+      .then(() => fetchData())
+      .catch(err => console.log(err));
+  };
+
+  const handleEdit = (item) => {
+    const newName = prompt("Enter new name", item.employeeName);
+    if (!newName) return;
+
+    API.put(`/api/compliance/update/${item.id}`, {
+      ...item,
+      employeeName: newName
+    }).then(() => fetchData());
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
 
   return (
@@ -22,16 +42,30 @@ export default function ListPage() {
             <th>Score</th>
             <th>Department</th>
             <th>Status</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
           {data.map(item => (
             <tr key={item.id}>
               <td>{item.id}</td>
-              <td>{item.employeeName}</td>
+
+              <td
+                onClick={() => handleEdit(item)}
+                style={{ cursor: "pointer", color: "blue" }}
+              >
+                {item.employeeName}
+              </td>
+
               <td>{item.score}</td>
               <td>{item.department}</td>
               <td>{item.status}</td>
+
+              <td>
+                <button onClick={() => handleDelete(item.id)}>
+                  Delete
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
