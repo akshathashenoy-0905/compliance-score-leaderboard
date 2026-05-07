@@ -8,7 +8,7 @@ export default function ListPage() {
     api
       .get("/all?page=0&size=10")
       .then((res) => {
-        setData(res.data.content);
+        setData(res.data);
       })
       .catch((err) => {
         console.log(err);

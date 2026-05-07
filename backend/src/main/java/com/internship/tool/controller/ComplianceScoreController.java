@@ -2,50 +2,75 @@ package com.internship.tool.controller;
 
 import com.internship.tool.entity.ComplianceScore;
 import com.internship.tool.repository.ComplianceScoreRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/api/compliance")
+@RequestMapping("/api")
 @CrossOrigin
 public class ComplianceScoreController {
 
-    private final ComplianceScoreRepository repository;
+    @Autowired
+    private ComplianceScoreRepository repository;
 
-    public ComplianceScoreController(ComplianceScoreRepository repository) {
-        this.repository = repository;
-    }
-
+    // GET ALL
     @GetMapping("/all")
-    @GetMapping("/search")
-    public List<ComplianceScore> search(@RequestParam String q){
-        return repository.search(q);
-    }
     public List<ComplianceScore> getAll() {
         return repository.findAllActive();
     }
 
-    @PostMapping("/add")
-    public ComplianceScore add(@RequestBody ComplianceScore score) {
-        return repository.save(score);
+    // SEARCH
+    @GetMapping("/search")
+    public List<ComplianceScore> search(@RequestParam String q) {
+        return repository.search(q);
     }
 
-    @PutMapping("/update/{id}")
-    public ComplianceScore update(@PathVariable Long id, @RequestBody ComplianceScore newData) {
-        ComplianceScore old = repository.findById(id).orElseThrow();
-        old.setEmployeeName(newData.getEmployeeName());
-        old.setScore(newData.getScore());
-        old.setDepartment(newData.getDepartment());
-        old.setStatus(newData.getStatus());
-        return repository.save(old);
+    // UPDATE
+    @PutMapping("/{id}")
+    public ComplianceScore update(@PathVariable Long id, @RequestBody ComplianceScore c) {
+        c.setId(id);
+        return repository.save(c);
     }
 
+    // SOFT DELETE
     @DeleteMapping("/{id}")
-    public String delete(@PathVariable Long id){
-        ComplianceScore item = repository.findById(id).orElseThrow();
-        item.setDeleted(true);
-        repository.save(item);
-        return "Deleted";
+    public void delete(@PathVariable Long id) {
+        ComplianceScore c = repository.findById(id).orElseThrow();
+        c.setDeleted(true);
+        repository.save(c);
+    }
+
+    // STATS API (FIXED - separate method)
+    @GetMapping("/stats")
+    public Map<String, Object> getStats() {
+
+        List<ComplianceScore> list = repository.findAll();
+
+        long total = list.size();
+
+        long good = list.stream()
+                .filter(x -> "GOOD".equals(x.getStatus()))
+                .count();
+
+        long low = list.stream()
+                .filter(x -> "LOW".equals(x.getStatus()))
+                .count();
+
+        double avgScore = list.stream()
+                .mapToDouble(ComplianceScore::getScore)
+                .average()
+                .orElse(0.0);
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("total", total);
+        stats.put("good", good);
+        stats.put("low", low);
+        stats.put("avgScore", avgScore);
+
+        return stats;
     }
 }
