@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
-
+import SearchBar from "../components/SearchBar";
+import { searchScores } from "../services/api";
 export default function ListPage() {
   const [data, setData] = useState([]);
-
+const handleSearch = async (params) => {
+  const res = await searchScores(params);
+  setScores(res.data);
+};
   useEffect(() => {
     api
       .get("/all?page=0&size=10")
@@ -18,7 +22,7 @@ export default function ListPage() {
   return (
     <div className="p-6">
       <h2 className="text-2xl mb-4">Compliance Records</h2>
-
+<SearchBar onSearch={handleSearch} />
       <table className="table-auto border w-full">
         <thead>
           <tr className="bg-gray-200">

@@ -33,7 +33,7 @@ public class ComplianceScoreService {
     }
 
     public List<ComplianceScore> search(String name) {
-        return repository.findByEmployeeNameContainingIgnoreCaseAndDeletedFalse(name);
+        return repository.search(name, null, null, null);
     }
 
     public List<ComplianceScore> getAllActive() {

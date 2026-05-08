@@ -13,3 +13,5 @@ api.interceptors.request.use((config) => {
 });
 
 export default api;
+export const searchScores = (params) =>
+  axios.get("/search", { params });

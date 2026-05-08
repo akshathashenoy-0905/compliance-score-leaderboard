@@ -3,8 +3,10 @@ package com.internship.tool.controller;
 import com.internship.tool.entity.ComplianceScore;
 import com.internship.tool.repository.ComplianceScoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,23 +19,34 @@ public class ComplianceScoreController {
     @Autowired
     private ComplianceScoreRepository repository;
 
-    // GET ALL
+    // GET ALL ACTIVE
     @GetMapping("/all")
     public List<ComplianceScore> getAll() {
-        return repository.findAllActive();
+        return repository.findByDeletedFalse();
     }
 
-    // SEARCH
+    // SEARCH (SINGLE CLEAN METHOD)
     @GetMapping("/search")
-    public List<ComplianceScore> search(@RequestParam String q) {
-        return repository.search(q);
+    public List<ComplianceScore> search(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        return repository.search(q, status, from, to);
     }
 
     // UPDATE
     @PutMapping("/{id}")
     public ComplianceScore update(@PathVariable Long id, @RequestBody ComplianceScore c) {
-        c.setId(id);
-        return repository.save(c);
+        ComplianceScore existing = repository.findById(id).orElseThrow();
+
+        existing.setEmployeeName(c.getEmployeeName());
+        existing.setScore(c.getScore());
+        existing.setDepartment(c.getDepartment());
+        existing.setStatus(c.getStatus());
+
+        return repository.save(existing);
     }
 
     // SOFT DELETE
@@ -44,20 +57,20 @@ public class ComplianceScoreController {
         repository.save(c);
     }
 
-    // STATS API (FIXED - separate method)
+    // STATS (ONLY ACTIVE DATA)
     @GetMapping("/stats")
     public Map<String, Object> getStats() {
 
-        List<ComplianceScore> list = repository.findAll();
+        List<ComplianceScore> list = repository.findByDeletedFalse();
 
         long total = list.size();
 
         long good = list.stream()
-                .filter(x -> "GOOD".equals(x.getStatus()))
+                .filter(x -> "GOOD".equalsIgnoreCase(x.getStatus()))
                 .count();
 
         long low = list.stream()
-                .filter(x -> "LOW".equals(x.getStatus()))
+                .filter(x -> "LOW".equalsIgnoreCase(x.getStatus()))
                 .count();
 
         double avgScore = list.stream()
