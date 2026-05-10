@@ -2,14 +2,13 @@ package com.internship.tool.controller;
 
 import com.internship.tool.entity.ComplianceScore;
 import com.internship.tool.repository.ComplianceScoreRepository;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
-import java.util.HashMap;
+import java.io.PrintWriter;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -19,71 +18,107 @@ public class ComplianceScoreController {
     @Autowired
     private ComplianceScoreRepository repository;
 
-    // GET ALL ACTIVE
+    // GET ALL (only non-deleted)
     @GetMapping("/all")
     public List<ComplianceScore> getAll() {
         return repository.findByDeletedFalse();
     }
 
-    // SEARCH (SINGLE CLEAN METHOD)
-    @GetMapping("/search")
-    public List<ComplianceScore> search(
-            @RequestParam(required = false) String q,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
-    ) {
-        return repository.search(q, status, from, to);
+    // CREATE
+    @PostMapping
+    public ComplianceScore create(@RequestBody ComplianceScore score) {
+        return repository.save(score);
     }
 
     // UPDATE
     @PutMapping("/{id}")
-    public ComplianceScore update(@PathVariable Long id, @RequestBody ComplianceScore c) {
+    public ComplianceScore update(@PathVariable Long id, @RequestBody ComplianceScore score) {
         ComplianceScore existing = repository.findById(id).orElseThrow();
 
-        existing.setEmployeeName(c.getEmployeeName());
-        existing.setScore(c.getScore());
-        existing.setDepartment(c.getDepartment());
-        existing.setStatus(c.getStatus());
+        existing.setEmployeeName(score.getEmployeeName());
+        existing.setDepartment(score.getDepartment());
+        existing.setScore(score.getScore());
+        existing.setStatus(score.getStatus());
 
         return repository.save(existing);
     }
 
     // SOFT DELETE
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
-        ComplianceScore c = repository.findById(id).orElseThrow();
-        c.setDeleted(true);
-        repository.save(c);
+    public String delete(@PathVariable Long id) {
+        ComplianceScore existing = repository.findById(id).orElseThrow();
+        existing.setDeleted(true);
+        repository.save(existing);
+        return "Deleted successfully";
     }
 
-    // STATS (ONLY ACTIVE DATA)
-    @GetMapping("/stats")
-    public Map<String, Object> getStats() {
+    // SEARCH
+    @GetMapping("/search")
+    public List<ComplianceScore> search(@RequestParam String q) {
+        return repository.findByEmployeeNameContainingIgnoreCase(q);
+    }
 
+    // STATS
+    @GetMapping("/stats")
+    public String stats() {
         List<ComplianceScore> list = repository.findByDeletedFalse();
 
         long total = list.size();
+        long low = list.stream().filter(c -> c.getScore() < 50).count();
+        long good = list.stream().filter(c -> c.getScore() >= 80).count();
+        double avg = list.stream().mapToInt(ComplianceScore::getScore).average().orElse(0);
 
-        long good = list.stream()
-                .filter(x -> "GOOD".equalsIgnoreCase(x.getStatus()))
-                .count();
+        return "Compliance Stats Dashboard\n" +
+                "Total Records: " + total + "\n\n" +
+                "Average Score: " + (int) avg + "\n\n" +
+                "Low Compliance: " + low + "\n\n" +
+                "Good Compliance: " + good;
+    }
 
-        long low = list.stream()
-                .filter(x -> "LOW".equalsIgnoreCase(x.getStatus()))
-                .count();
+    // EXPORT CSV
+    @GetMapping("/export")
+    public void exportCsv(HttpServletResponse response) throws Exception {
 
-        double avgScore = list.stream()
-                .mapToDouble(ComplianceScore::getScore)
-                .average()
-                .orElse(0.0);
+        response.setContentType("text/csv");
+        response.setHeader("Content-Disposition", "attachment; filename=compliance.csv");
 
-        Map<String, Object> stats = new HashMap<>();
-        stats.put("total", total);
-        stats.put("good", good);
-        stats.put("low", low);
-        stats.put("avgScore", avgScore);
+        List<ComplianceScore> list = repository.findByDeletedFalse();
 
-        return stats;
+        PrintWriter writer = response.getWriter();
+        writer.println("ID,Employee Name,Department,Score,Status");
+
+        for (ComplianceScore c : list) {
+            writer.println(
+                    c.getId() + "," +
+                            c.getEmployeeName() + "," +
+                            c.getDepartment() + "," +
+                            c.getScore() + "," +
+                            c.getStatus()
+            );
+        }
+
+        writer.flush();
+        writer.close();
+    }
+
+    // FILE UPLOAD (Swagger shows Choose File)
+    @PostMapping(value = "/upload", consumes = "multipart/form-data")
+    public String uploadFile(@RequestPart("file") MultipartFile file) {
+
+        if (file == null || file.isEmpty()) {
+            return "File is empty";
+        }
+
+        String contentType = file.getContentType();
+
+        if (contentType == null || !contentType.equalsIgnoreCase("text/csv")) {
+            return "Only CSV files are allowed";
+        }
+
+        if (file.getSize() > 2 * 1024 * 1024) {
+            return "File too large (max 2MB)";
+        }
+
+        return "File uploaded successfully: " + file.getOriginalFilename();
     }
 }
