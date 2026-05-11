@@ -3,7 +3,6 @@ package com.internship.tool.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "compliance_score")
 public class ComplianceScore {
 
     @Id
@@ -11,26 +10,52 @@ public class ComplianceScore {
     private Long id;
 
     private String employeeName;
-    private Integer score;
     private String department;
     private String status;
+    private int score;
     private boolean deleted = false;
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getEmployeeName() { return employeeName; }
-    public void setEmployeeName(String employeeName) { this.employeeName = employeeName; }
+    public String getEmployeeName() {
+        return employeeName;
+    }
 
-    public Integer getScore() { return score; }
-    public void setScore(Integer score) { this.score = score; }
+    public void setEmployeeName(String employeeName) {
+        this.employeeName = employeeName;
+    }
 
-    public String getDepartment() { return department; }
-    public void setDepartment(String department) { this.department = department; }
+    public String getDepartment() {
+        return department;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public void setDepartment(String department) {
+        this.department = department;
+    }
 
-    public boolean isDeleted() { return deleted; }
-    public void setDeleted(boolean deleted) { this.deleted = deleted; }
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    public void setScore(int score) {
+        this.score = score;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
 }

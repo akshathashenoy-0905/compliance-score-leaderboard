@@ -1,6 +1,9 @@
 C:\Users\lenovo\IdeaProjects\compliance-score-leaderboard\backend\src\main\java\com\internship\tool\controller\ComplianceScoreController.java
 C:\Users\lenovo\IdeaProjects\compliance-score-leaderboard\backend\src\main\java\com\internship\tool\controller\TestController.java
+C:\Users\lenovo\IdeaProjects\compliance-score-leaderboard\backend\src\main\java\com\internship\tool\DataSeeder.java
+C:\Users\lenovo\IdeaProjects\compliance-score-leaderboard\backend\src\main\java\com\internship\tool\entity\AuditLog.java
 C:\Users\lenovo\IdeaProjects\compliance-score-leaderboard\backend\src\main\java\com\internship\tool\entity\ComplianceScore.java
+C:\Users\lenovo\IdeaProjects\compliance-score-leaderboard\backend\src\main\java\com\internship\tool\repository\AuditLogRepository.java
 C:\Users\lenovo\IdeaProjects\compliance-score-leaderboard\backend\src\main\java\com\internship\tool\repository\ComplianceScoreRepository.java
 C:\Users\lenovo\IdeaProjects\compliance-score-leaderboard\backend\src\main\java\com\internship\tool\service\ComplianceScoreService.java
 C:\Users\lenovo\IdeaProjects\compliance-score-leaderboard\backend\src\main\java\com\internship\tool\ToolApplication.java

@@ -6,7 +6,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
+import java.util.HashMap;
+import java.util.Map;
 import java.io.PrintWriter;
 import java.util.List;
 
@@ -46,21 +47,30 @@ public class ComplianceScoreController {
     // SOFT DELETE
     @DeleteMapping("/{id}")
     public String delete(@PathVariable Long id) {
+        System.out.println("DELETE API CALLED");
+
         ComplianceScore existing = repository.findById(id).orElseThrow();
         existing.setDeleted(true);
         repository.save(existing);
+
         return "Deleted successfully";
     }
 
     // SEARCH
     @GetMapping("/search")
     public List<ComplianceScore> search(@RequestParam String q) {
+
+        if (q == null || q.trim().isEmpty()) {
+            return repository.findByDeletedFalse();
+        }
+
         return repository.findByEmployeeNameContainingIgnoreCase(q);
     }
 
     // STATS
     @GetMapping("/stats")
-    public String stats() {
+    public Map<String, Object> stats() {
+
         List<ComplianceScore> list = repository.findByDeletedFalse();
 
         long total = list.size();
@@ -68,11 +78,13 @@ public class ComplianceScoreController {
         long good = list.stream().filter(c -> c.getScore() >= 80).count();
         double avg = list.stream().mapToInt(ComplianceScore::getScore).average().orElse(0);
 
-        return "Compliance Stats Dashboard\n" +
-                "Total Records: " + total + "\n\n" +
-                "Average Score: " + (int) avg + "\n\n" +
-                "Low Compliance: " + low + "\n\n" +
-                "Good Compliance: " + good;
+        Map<String, Object> res = new HashMap<>();
+        res.put("total", total);
+        res.put("low", low);
+        res.put("good", good);
+        res.put("avg", (int) avg);
+
+        return res;
     }
 
     // EXPORT CSV
