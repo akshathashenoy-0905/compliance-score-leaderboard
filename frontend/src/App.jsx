@@ -1,12 +1,15 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Analytics from "./pages/Analytics";
+import ListPage from "./pages/ListPage";  // ← ADD THIS
 
-export default function App() {
+function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/analytics" element={<Analytics />} />
+        <Route path="/" element={<ListPage />} />
+        <Route path="/list" element={<ListPage />} />
       </Routes>
     </BrowserRouter>
   );
 }
+
+export default App;

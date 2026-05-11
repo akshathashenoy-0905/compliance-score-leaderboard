@@ -4,104 +4,126 @@ import axios from "axios";
 export default function ListPage() {
   const [data, setData] = useState([]);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
-const [status, setStatus] = useState("");
+  const [filter, setFilter] = useState("ALL");
+
   useEffect(() => {
-    fetchData();
+    axios
+      .get("http://localhost:8080/api/all")
+      .then((res) => setData(res.data))
+      .catch((err) => console.log(err));
   }, []);
-useEffect(() => {
-  fetchData();
-}, [status]);
-  useEffect(() => {
-    const delay = setTimeout(() => {
-      fetchData();
-    }, 400); // debounce
 
-    return () => clearTimeout(delay);
-  }, [search]);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-
-      let url = "http://localhost:8080/api/all";
-
-      if (search.trim() !== "") {
-        url = `http://localhost:8080/api/search?q=${search}`;
-      }
-
-      const res = await axios.get(url);
-
-      let filtered = res.data;
-
-      if (status !== "") {
-        filtered = filtered.filter((item) => item.status === status);
-      }
-
-      setData(filtered);
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) return <div>Loading...</div>;
+  const filteredData = data
+    .filter((item) =>
+      item.employeeName.toLowerCase().includes(search.toLowerCase())
+    )
+    .filter((item) => {
+      if (filter === "ALL") return true;
+      return item.status === filter;
+    });
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>Compliance List</h2>
+    <div style={styles.container}>
+      <h2 style={styles.title}>Compliance List</h2>
 
-      {/* SEARCH BOX */}
-      <input
-        type="text"
-        placeholder="Search employee..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{
-          padding: "10px",
-          width: "300px",
-          marginTop: "10px",
-        }}
-      />
-<select
-  value={status}
-  onChange={(e) => setStatus(e.target.value)}
-  style={{ padding: "10px", marginLeft: "10px" }}
->
-  <option value="">All Status</option>
-  <option value="GOOD">GOOD</option>
-  <option value="LOW">LOW</option>
-  <option value="AVERAGE">AVERAGE</option>
-</select>
-      {/* TABLE */}
-      {data.length === 0 ? (
-        <p>No records found</p>
-      ) : (
-        <table border="1" cellPadding="10" style={{ marginTop: "20px", width: "100%" }}>
+      {/* SEARCH + FILTER */}
+      <div style={styles.topBar}>
+        <input
+          style={styles.input}
+          placeholder="Search employee..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+
+        <select
+          style={styles.select}
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+        >
+          <option value="ALL">All Status</option>
+          <option value="GOOD">GOOD</option>
+          <option value="BAD">BAD</option>
+        </select>
+      </div>
+
+      {/* RESPONSIVE TABLE */}
+      <div style={styles.tableWrapper}>
+        <table style={styles.table}>
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Employee Name</th>
-              <th>Department</th>
-              <th>Score</th>
-              <th>Status</th>
+              <th style={styles.th}>ID</th>
+              <th style={styles.th}>Employee Name</th>
+              <th style={styles.th}>Department</th>
+              <th style={styles.th}>Score</th>
+              <th style={styles.th}>Status</th>
             </tr>
           </thead>
 
           <tbody>
-            {data.map((item) => (
+            {filteredData.map((item) => (
               <tr key={item.id}>
-                <td>{item.id}</td>
-                <td>{item.employeeName}</td>
-                <td>{item.department}</td>
-                <td>{item.score}</td>
-                <td>{item.status}</td>
+                <td style={styles.td}>{item.id}</td>
+                <td style={styles.td}>{item.employeeName}</td>
+                <td style={styles.td}>{item.department}</td>
+                <td style={styles.td}>{item.score}</td>
+                <td
+                  style={{
+                    ...styles.td,
+                    fontWeight: "bold",
+                    color: item.status === "GOOD" ? "green" : "red",
+                  }}
+                >
+                  {item.status}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
-      )}
+      </div>
     </div>
   );
 }
+
+/* INLINE CSS (SAFE + NO TAILWIND ISSUES) */
+const styles = {
+  container: {
+    padding: "20px",
+    fontFamily: "Arial",
+  },
+  title: {
+    textAlign: "center",
+    marginBottom: "20px",
+  },
+  topBar: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginBottom: "15px",
+    flexWrap: "wrap",
+    gap: "10px",
+  },
+  input: {
+    padding: "8px",
+    width: "200px",
+  },
+  select: {
+    padding: "8px",
+  },
+  tableWrapper: {
+    overflowX: "auto",
+  },
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    minWidth: "600px",
+  },
+  th: {
+    border: "1px solid #ccc",
+    padding: "10px",
+    backgroundColor: "#f4f4f4",
+  },
+  td: {
+    border: "1px solid #ccc",
+    padding: "10px",
+    textAlign: "center",
+  },
+};
