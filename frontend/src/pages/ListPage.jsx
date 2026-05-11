@@ -1,49 +1,107 @@
 import { useEffect, useState } from "react";
-import api from "../services/api";
-import SearchBar from "../components/SearchBar";
-import { searchScores } from "../services/api";
+import axios from "axios";
+
 export default function ListPage() {
   const [data, setData] = useState([]);
-const handleSearch = async (params) => {
-  const res = await searchScores(params);
-  setScores(res.data);
-};
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+const [status, setStatus] = useState("");
   useEffect(() => {
-    api
-      .get("/all?page=0&size=10")
-      .then((res) => {
-        setData(res.data);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    fetchData();
   }, []);
+useEffect(() => {
+  fetchData();
+}, [status]);
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      fetchData();
+    }, 400); // debounce
+
+    return () => clearTimeout(delay);
+  }, [search]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+
+      let url = "http://localhost:8080/api/all";
+
+      if (search.trim() !== "") {
+        url = `http://localhost:8080/api/search?q=${search}`;
+      }
+
+      const res = await axios.get(url);
+
+      let filtered = res.data;
+
+      if (status !== "") {
+        filtered = filtered.filter((item) => item.status === status);
+      }
+
+      setData(filtered);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl mb-4">Compliance Records</h2>
-<SearchBar onSearch={handleSearch} />
-      <table className="table-auto border w-full">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="border p-2">ID</th>
-            <th className="border p-2">Name</th>
-            <th className="border p-2">Score</th>
-            <th className="border p-2">Status</th>
-          </tr>
-        </thead>
+    <div style={{ padding: "20px" }}>
+      <h2>Compliance List</h2>
 
-        <tbody>
-          {data.map((item) => (
-            <tr key={item.id}>
-              <td className="border p-2">{item.id}</td>
-              <td className="border p-2">{item.name}</td>
-              <td className="border p-2">{item.score}</td>
-              <td className="border p-2">{item.status}</td>
+      {/* SEARCH BOX */}
+      <input
+        type="text"
+        placeholder="Search employee..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={{
+          padding: "10px",
+          width: "300px",
+          marginTop: "10px",
+        }}
+      />
+<select
+  value={status}
+  onChange={(e) => setStatus(e.target.value)}
+  style={{ padding: "10px", marginLeft: "10px" }}
+>
+  <option value="">All Status</option>
+  <option value="GOOD">GOOD</option>
+  <option value="LOW">LOW</option>
+  <option value="AVERAGE">AVERAGE</option>
+</select>
+      {/* TABLE */}
+      {data.length === 0 ? (
+        <p>No records found</p>
+      ) : (
+        <table border="1" cellPadding="10" style={{ marginTop: "20px", width: "100%" }}>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Employee Name</th>
+              <th>Department</th>
+              <th>Score</th>
+              <th>Status</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {data.map((item) => (
+              <tr key={item.id}>
+                <td>{item.id}</td>
+                <td>{item.employeeName}</td>
+                <td>{item.department}</td>
+                <td>{item.score}</td>
+                <td>{item.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
