@@ -1,8 +1,0 @@
-com\internship\tool\entity\ComplianceScore.class
-com\internship\tool\DataSeeder.class
-com\internship\tool\service\ComplianceScoreService.class
-com\internship\tool\entity\AuditLog.class
-com\internship\tool\ToolApplication.class
-com\internship\tool\repository\ComplianceScoreRepository.class
-com\internship\tool\controller\ComplianceScoreController.class
-com\internship\tool\repository\AuditLogRepository.class
